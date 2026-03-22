@@ -2,6 +2,10 @@ using System.Linq;
 
 namespace SportsStore.Models
 {
+    // 📦 MẪU THIẾT KẾ REPOSITORY - Định nghĩa interface
+    // Xác định hợp đồng cho các thao tác data access
+    // Cho phép dependency injection và dễ dàng testing
+    // 🔗 INTERFACE: IStoreRepository là interface được implement bởi EFStoreRepository
     public interface IStoreRepository
     {
         IQueryable<Product> Products { get; }

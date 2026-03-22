@@ -6,6 +6,11 @@ using SportsStore.Services;
 using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.Google;
 
+// ========================================
+// 🏗️ MẪU THIẾT KẾ BUILDER - WebApplication.CreateBuilder()
+// Tạo instance WebApplicationBuilder với fluent API
+// Cấu hình services một cách linh hoạt
+// ========================================
 var builder = WebApplication.CreateBuilder(args);
 
 // ===================
@@ -68,18 +73,32 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+// 🔒 MẪU THIẾT KẾ SINGLETON - IHttpContextAccessor
+// Chỉ có 1 instance duy nhất trong toàn bộ ứng dụng
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+// 🏭 MẪU THIẾT KẾ FACTORY METHOD - PersistentCart.GetCart()
+// Factory method tạo Cart instance dựa trên context (user, session, database)
 builder.Services.AddScoped<Cart>(sp => PersistentCart.GetCart(sp));
 
-// Repository
-// Repository
+// 📦 MẪU THIẾT KẾ REPOSITORY - Lớp trừu tượng cho Data Access
 builder.Services.AddScoped<IStoreRepository, EFStoreRepository>();
 builder.Services.AddScoped<IOrderRepository, EFOrderRepository>();
-builder.Services.AddScoped<IRentalRepository, EFRentalRepository>(); 
+builder.Services.AddScoped<IRentalRepository, EFRentalRepository>();
+
+// 🔌 MẪU THIẾT KẾ ADAPTER - EmailSender adapts SmtpClient
 builder.Services.AddScoped<IEmailSender, EmailSender>();
+
 builder.Services.AddScoped<SaleService>();
+
+// 📢 MẪU THIẾT KẾ STRATEGY - Các chiến lược thông báo khác nhau
 builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// 🎯 MẪU THIẾT KẾ STRATEGY - Các chiến lược voucher khác nhau
 builder.Services.AddScoped<SportsStore.Services.IVoucherService, SportsStore.Services.VoucherService>();
+
+// 💾 MẪU THIẾT KẾ MEMENTO - Quản lý trạng thái Order với undo/redo
+builder.Services.AddScoped<OrderStateManager>();
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole(); // ghi log ra terminal
 builder.Logging.SetMinimumLevel(LogLevel.Information);

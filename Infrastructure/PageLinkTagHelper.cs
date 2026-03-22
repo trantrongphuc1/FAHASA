@@ -8,6 +8,9 @@ using SportsStore.Models.ViewModels;
 
 namespace SportsStore.Infrastructure
 {
+    // 🏷️ TAG HELPER - Custom HTML tag generator
+    // Tạo các link phân trang tự động từ model data
+    // 🔗 KẾ THỪA: PageLinkTagHelper kế thừa từ class TagHelper (ASP.NET Core)
     [HtmlTargetElement("div", Attributes = "page-model")]
     public class PageLinkTagHelper : TagHelper
     {

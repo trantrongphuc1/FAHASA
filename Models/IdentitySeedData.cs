@@ -45,7 +45,8 @@ namespace SportsStore.Models
                         PhoneNumber = "555-1234",
                         FullName = "Quản trị viên",
                         Address = "TP.HCM",
-                        BirthDate = new DateTime(1990, 1, 1)
+                        BirthDate = new DateTime(1990, 1, 1),
+                        IsAdmin = true
                     };
 
                     var result = await userManager.CreateAsync(user, adminPassword);
@@ -53,6 +54,11 @@ namespace SportsStore.Models
                     {
                         throw new Exception("Tạo tài khoản admin thất bại: " + string.Join(", ", result.Errors.Select(e => e.Description)));
                     }
+                }
+                else if (!user.IsAdmin)
+                {
+                    user.IsAdmin = true;
+                    await userManager.UpdateAsync(user);
                 }
 
                 // Gán role Admin nếu chưa có

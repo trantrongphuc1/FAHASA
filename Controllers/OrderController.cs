@@ -14,16 +14,20 @@ namespace SportsStore.Controllers
         private readonly IRentalRepository rentalRepository;
         private readonly Cart cart;
         private readonly UserManager<ApplicationUser> userManager;
+        // 💾 MẪU THIẾT KẾ MEMENTO - Inject OrderStateManager
+        private readonly OrderStateManager orderStateManager;
 
         public OrderController(IOrderRepository orderRepo,
                                IRentalRepository rentalRepo,
                                Cart cartService,
-                               UserManager<ApplicationUser> userMgr)
+                               UserManager<ApplicationUser> userMgr,
+                               OrderStateManager stateManager)
         {
             orderRepository = orderRepo;
             rentalRepository = rentalRepo;
             cart = cartService;
             userManager = userMgr;
+            orderStateManager = stateManager;
         }
 
         public ViewResult Checkout() => View(new Order());
@@ -192,15 +196,43 @@ namespace SportsStore.Controllers
                 return RedirectToAction("MyOrders");
             }
 
-            order.Status = newStatus;
-            if (newStatus == OrderStatus.DaNhanHang)
+            try
             {
-                order.Shipped = true; // đồng bộ flag cũ
-            }
-            orderRepository.SaveOrder(order);
+                // 💾 MẪU THIẾT KẾ MEMENTO - Sử dụng OrderStateManager để thay đổi trạng thái
+                // Tự động lưu trạng thái cũ và cho phép undo nếu cần
+                await orderStateManager.ChangeOrderStatus(id, newStatus,
+                    $"User {user.UserName} cập nhật trạng thái từ {order.Status} sang {newStatus}");
 
-            TempData["Message"] = $"Đã cập nhật trạng thái đơn hàng #{id} thành công.";
+                if (newStatus == OrderStatus.DaNhanHang)
+                {
+                    order.Shipped = true; // đồng bộ flag cũ
+                    orderRepository.SaveOrder(order);
+                }
+
+                TempData["Message"] = $"Đơn hàng #{id} đã được cập nhật trạng thái thành '{GetStatusDisplayName(newStatus)}'.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Lỗi khi cập nhật trạng thái: {ex.Message}";
+            }
+
             return RedirectToAction("MyOrders");
+        }
+
+        // Helper method để hiển thị tên trạng thái tiếng Việt
+        private string GetStatusDisplayName(OrderStatus status)
+        {
+            return status switch
+            {
+                OrderStatus.ChoXacNhan => "Chờ xác nhận",
+                OrderStatus.ChoGiaoHang => "Chờ giao hàng",
+                OrderStatus.DangVanChuyen => "Đang vận chuyển",
+                OrderStatus.DaNhanHang => "Đã nhận hàng",
+                OrderStatus.DaHuy => "Đã hủy",
+                OrderStatus.YeuCauHoanTien => "Yêu cầu hoàn tiền",
+                OrderStatus.HoanTienThanhCong => "Hoàn tiền thành công",
+                _ => status.ToString()
+            };
         }
     }
 }

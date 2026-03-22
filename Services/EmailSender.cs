@@ -5,11 +5,18 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
+// 🔌 MẪU THIẾT KẾ ADAPTER - Interface định nghĩa hợp đồng email
+// Chuẩn hóa interface cho việc gửi email
+// 🔗 INTERFACE: IEmailSender là interface được implement bởi EmailSender
 public interface IEmailSender
 {
     Task SendEmailAsync(string toEmail, string subject, string message);
 }
 
+// 🔌 MẪU THIẾT KẾ ADAPTER - Adapts SmtpClient to IEmailSender interface
+// Wraps .NET's SmtpClient trong một interface email chuẩn hóa
+// Cho phép dễ dàng thay thế hoặc mock trong tests
+// 🔗 IMPLEMENT: EmailSender implement interface IEmailSender
 public class EmailSender : IEmailSender
 {
     private readonly IConfiguration _configuration;

@@ -5,6 +5,10 @@ using System.IO;
 
 namespace SportsStore.Models
 {
+    // 🏭 MẪU THIẾT KẾ FACTORY - IDesignTimeDbContextFactory<T>
+    // Tạo các instance StoreDbContext cho các thao tác design-time (EF migrations)
+    // Đóng gói logic tạo DbContext trong một factory class chuyên dụng
+    // 🔗 IMPLEMENT: StoreDbContextFactory implement interface IDesignTimeDbContextFactory<StoreDbContext>
     public class StoreDbContextFactory : IDesignTimeDbContextFactory<StoreDbContext>
     {
         public StoreDbContext CreateDbContext(string[] args)

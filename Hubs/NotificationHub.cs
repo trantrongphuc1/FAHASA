@@ -3,6 +3,11 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace SportsStore.Hubs
 {
+    // 👁️ MẪU THIẾT KẾ OBSERVER (qua SignalR)
+    // Clients đăng ký cập nhật thông báo thông qua SignalR groups
+    // Hub hoạt động như mediator giữa server và các clients đã đăng ký
+    // Thông báo đẩy real-time sử dụng cơ chế publish-subscribe
+    // 🔗 KẾ THỪA: NotificationHub kế thừa từ class Hub (SignalR base class)
     [Authorize]
     public class NotificationHub : Hub
     {

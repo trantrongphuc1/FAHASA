@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "XJyy9f3yfd4=",
+  "dgSpecHash": "jE+rImWSUfo=",
   "success": true,
   "projectFilePath": "C:\\Users\\duyng\\Downloads\\FahasaWorkShop\\SportsStore.csproj",
   "expectedPackageFiles": [
@@ -39,6 +39,7 @@
     "C:\\Users\\duyng\\.nuget\\packages\\microsoft.entityframeworkcore.design\\9.0.6\\microsoft.entityframeworkcore.design.9.0.6.nupkg.sha512",
     "C:\\Users\\duyng\\.nuget\\packages\\microsoft.entityframeworkcore.relational\\9.0.6\\microsoft.entityframeworkcore.relational.9.0.6.nupkg.sha512",
     "C:\\Users\\duyng\\.nuget\\packages\\microsoft.entityframeworkcore.sqlserver\\9.0.6\\microsoft.entityframeworkcore.sqlserver.9.0.6.nupkg.sha512",
+    "C:\\Users\\duyng\\.nuget\\packages\\microsoft.entityframeworkcore.tools\\10.0.0\\microsoft.entityframeworkcore.tools.10.0.0.nupkg.sha512",
     "C:\\Users\\duyng\\.nuget\\packages\\microsoft.extensions.caching.abstractions\\9.0.6\\microsoft.extensions.caching.abstractions.9.0.6.nupkg.sha512",
     "C:\\Users\\duyng\\.nuget\\packages\\microsoft.extensions.caching.memory\\9.0.6\\microsoft.extensions.caching.memory.9.0.6.nupkg.sha512",
     "C:\\Users\\duyng\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\9.0.6\\microsoft.extensions.configuration.abstractions.9.0.6.nupkg.sha512",

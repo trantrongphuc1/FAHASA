@@ -5,6 +5,9 @@ using SportsStore.Models;
 
 namespace SportsStore.Services
 {
+    // 🎯 MẪU THIẾT KẾ STRATEGY - Implementation cụ thể của notification strategy
+    // Xử lý logic gửi thông báo qua database và SignalR
+    // 🔗 IMPLEMENT: NotificationService implement interface INotificationService
     public class NotificationService : INotificationService
     {
         private readonly StoreDbContext _context;

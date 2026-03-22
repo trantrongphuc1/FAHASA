@@ -11,46 +11,48 @@ namespace SportsStore.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Orders_Vouchers_VoucherId",
-                table: "Orders");
+            migrationBuilder.Sql(@"
+IF EXISTS (
+    SELECT 1 FROM sys.foreign_keys 
+    WHERE name = 'FK_Orders_Vouchers_VoucherId' AND parent_object_id = OBJECT_ID('Orders')
+)
+BEGIN
+    ALTER TABLE Orders DROP CONSTRAINT FK_Orders_Vouchers_VoucherId;
+END");
 
-            migrationBuilder.DropTable(
-                name: "ShippingFees");
+            migrationBuilder.Sql(@"
+IF OBJECT_ID('dbo.ShippingFees', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE dbo.ShippingFees;
+END");
 
-            migrationBuilder.DropTable(
-                name: "UserVouchers");
+            migrationBuilder.Sql(@"
+IF OBJECT_ID('dbo.UserVouchers', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE dbo.UserVouchers;
+END");
 
-            migrationBuilder.DropTable(
-                name: "Vouchers");
+            migrationBuilder.Sql(@"
+IF OBJECT_ID('dbo.Vouchers', 'U') IS NOT NULL
+BEGIN
+    DROP TABLE dbo.Vouchers;
+END");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Orders_VoucherId",
-                table: "Orders");
+            migrationBuilder.Sql(@"
+IF EXISTS (
+    SELECT 1 FROM sys.indexes 
+    WHERE name = 'IX_Orders_VoucherId' AND object_id = OBJECT_ID('Orders')
+)
+BEGIN
+    DROP INDEX IX_Orders_VoucherId ON Orders;
+END");
 
-            migrationBuilder.DropColumn(
-                name: "DiscountAmount",
-                table: "Orders");
-
-            migrationBuilder.DropColumn(
-                name: "District",
-                table: "Orders");
-
-            migrationBuilder.DropColumn(
-                name: "FinalAmount",
-                table: "Orders");
-
-            migrationBuilder.DropColumn(
-                name: "Province",
-                table: "Orders");
-
-            migrationBuilder.DropColumn(
-                name: "ShippingFee",
-                table: "Orders");
-
-            migrationBuilder.DropColumn(
-                name: "VoucherId",
-                table: "Orders");
+            migrationBuilder.Sql("IF COL_LENGTH('Orders','DiscountAmount') IS NOT NULL ALTER TABLE Orders DROP COLUMN DiscountAmount;");
+            migrationBuilder.Sql("IF COL_LENGTH('Orders','District') IS NOT NULL ALTER TABLE Orders DROP COLUMN District;");
+            migrationBuilder.Sql("IF COL_LENGTH('Orders','FinalAmount') IS NOT NULL ALTER TABLE Orders DROP COLUMN FinalAmount;");
+            migrationBuilder.Sql("IF COL_LENGTH('Orders','Province') IS NOT NULL ALTER TABLE Orders DROP COLUMN Province;");
+            migrationBuilder.Sql("IF COL_LENGTH('Orders','ShippingFee') IS NOT NULL ALTER TABLE Orders DROP COLUMN ShippingFee;");
+            migrationBuilder.Sql("IF COL_LENGTH('Orders','VoucherId') IS NOT NULL ALTER TABLE Orders DROP COLUMN VoucherId;");
         }
 
         /// <inheritdoc />

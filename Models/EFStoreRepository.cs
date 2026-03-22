@@ -3,6 +3,11 @@ using System.Linq;
 
 namespace SportsStore.Models
 {
+    // 📦 MẪU THIẾT KẾ REPOSITORY - Lớp trừu tượng cho data access
+    // Đóng gói các truy vấn Entity Framework
+    // Cung cấp giao diện thống nhất IStoreRepository cho data access
+    // Tách biệt business logic khỏi database implementation
+    // 🔗 IMPLEMENT: EFStoreRepository implement interface IStoreRepository
     public class EFStoreRepository : IStoreRepository
     {
         private StoreDbContext context;

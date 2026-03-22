@@ -8,8 +8,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SportsStore.Models
 {
+    // 🏗️ MẪU THIẾT KẾ DECORATOR - Mở rộng Cart với tính năng persistence
+    // Nâng cấp Cart với khả năng lưu trữ database/session
+    // 🎯 MẪU THIẾT KẾ FACADE - Cung cấp giao diện thống nhất cho các thao tác cart
+    // Ẩn độ phức tạp của logic lưu trữ session vs database
+    // 🔗 KẾ THỪA: PersistentCart kế thừa từ class Cart (base cart functionality)
     public class PersistentCart : Cart
     {
+        // 🏭 MẪU THIẾT KẾ FACTORY METHOD - Phương thức factory tĩnh
+        // Tạo instance Cart phù hợp dựa trên context người dùng
+        // Trả về instance Cart được cấu hình cho user đăng nhập hoặc ẩn danh
         public static Cart GetCart(IServiceProvider services)
         {
             var session = services.GetRequiredService<IHttpContextAccessor>()?.HttpContext?.Session;

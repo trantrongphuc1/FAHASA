@@ -6,6 +6,9 @@ using SportsStore.Models;
 
 namespace SportsStore.Services
 {
+    // 🎯 MẪU THIẾT KẾ STRATEGY - Implementation cụ thể của voucher strategy
+    // Xử lý logic áp dụng voucher và tính toán giảm giá
+    // 🔗 IMPLEMENT: VoucherService implement interface IVoucherService
     public class VoucherService : IVoucherService
     {
         private readonly StoreDbContext _ctx;

@@ -248,6 +248,29 @@
         color: white;
     }
 
+    .btn-secondary-action {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        color: #555;
+        box-shadow: 0 4px 15px rgba(168, 237, 234, 0.3);
+    }
+
+    .btn-secondary-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(168, 237, 234, 0.4);
+        color: #333;
+    }
+
+    .memento-actions {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #eee;
+    }
+
+    .memento-actions .btn-action {
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+
     .btn-review {
         background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         color: white;
@@ -475,6 +498,26 @@
                                     </button>
                                 </form>
                             }
+
+                            <!-- 💾 MẪU THIẾT KẾ MEMENTO - Buttons Undo/Redo -->
+                            <div class="memento-actions mt-2">
+                                <form asp-action="UndoStatus" asp-controller="Order" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@order.OrderID" />
+                                    <button type="submit" class="btn-action btn-secondary-action btn-sm"
+                                            title="Hoàn tác thay đổi trạng thái trước đó">
+                                        <i class="fas fa-undo-alt"></i>
+                                        Undo
+                                    </button>
+                                </form>
+                                <form asp-action="RedoStatus" asp-controller="Order" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@order.OrderID" />
+                                    <button type="submit" class="btn-action btn-secondary-action btn-sm"
+                                            title="Làm lại thay đổi trạng thái đã hoàn tác">
+                                        <i class="fas fa-redo-alt"></i>
+                                        Redo
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
     }

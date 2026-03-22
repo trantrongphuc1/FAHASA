@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace SportsStore.Models
 {
+    // 🛒 CLASS CƠ SỞ - Base cart functionality
+    // Chứa logic cơ bản của giỏ hàng (thêm/xóa sản phẩm)
+    // 🔗 ĐƯỢC KẾ THỪA: PersistentCart kế thừa từ Cart để thêm persistence
     public class Cart
     {
         // Danh sách các dòng sản phẩm trong giỏ hàng

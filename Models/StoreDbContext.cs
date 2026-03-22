@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SportsStore.Models
 {
+    // 🗄️ ENTITY FRAMEWORK CONTEXT - Database context chính
+    // Quản lý kết nối và mapping giữa models và database tables
+    // 🔗 KẾ THỪA: StoreDbContext kế thừa từ IdentityDbContext<ApplicationUser>
     public class StoreDbContext : IdentityDbContext<ApplicationUser>
     {
         public StoreDbContext(DbContextOptions<StoreDbContext> options)
