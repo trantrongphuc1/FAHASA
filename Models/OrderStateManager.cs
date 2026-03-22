@@ -5,10 +5,50 @@ using Microsoft.Extensions.Logging;
 
 namespace SportsStore.Models
 {
-    // 🎭 MẪU THIẾT KẾ MEMENTO - State Manager class
-    // Quản lý việc thay đổi trạng thái Order với khả năng undo/redo
-    // Kết hợp Originator, Caretaker và Memento để tạo state management hoàn chỉnh
-    // 🔗 COMBINES: OrderOriginator + OrderCaretaker + OrderMemento
+    // =================================================================
+    // 🎭 MẦU THIẾT KẾ MEMENTO - State Manager với Undo/Redo
+    // =================================================================
+    // Mục đích: Quản lý việc thay đổi trạng thái Order với khả năng undo/redo
+    // 
+    // Cách hoạt động:
+    //   1. ORIGINATOR (Order): Object cần lưu state
+    //   2. MEMENTO (OrderMemento): Snapshot của state tại 1 thời điểm
+    //   3. CARETAKER (OrderCaretaker): Lưu trữ các memento trong stack
+    //
+    // Flow:
+    //   ChangeOrderStatus(ChoXacNhan → DangXuLy)
+    //     ↓
+    //   CreateMemento("Trước khi thay đổi...") [lưu state: ChoXacNhan]
+    //     ↓
+    //   Caretaker.SaveMemento(memento) [thêm vào undo stack]
+    //     ↓
+    //   order.Status = DangXuLy
+    //     ↓
+    //   SaveChangesAsync()
+    //
+    //   UndoOrderStatus()
+    //     ↓
+    //   Caretaker.Undo() [lấy memento gần đây nhất]
+    //     ↓
+    //   RestoreFromMemento(memento) [khôi phục state: ChoXacNhan]
+    //
+    // Lợi ích:
+    //   • Admin có thể hoàn tác thay đổi trạng thái Order
+    //   • Lịch sử thay đổi được lưu (audit trail)
+    //   • Không cần phức tạp SQL version control
+    //
+    // 🔄 LIÊN QUAN:
+    //   • COMMAND PATTERN: ChangeOrderStatus() là Command object
+    //   • STATE PATTERN: Order có state (ChoXacNhan, DangXuLy, v.v.)
+    //   • HISTORY PATTERN: Lưu trữ snapshots để replay/undo
+    //
+    // 📄 LIÊN KẾT VỚI FILE KHÁC:
+    //   • Models/OrderMemento.cs: Snapshot class
+    //   • Models/OrderOriginator.cs: Object cần lưu state
+    //   • Models/OrderCaretaker.cs: Lưu trữ memento stack
+    //   • Program.cs: Đăng ký: `AddScoped<OrderStateManager>()`
+    //   • Controllers/OrderController.cs: Dùng để change order status
+    // ==================================================================
     public class OrderStateManager
     {
         private readonly StoreDbContext _context;
@@ -24,7 +64,11 @@ namespace SportsStore.Models
             _caretaker = new OrderCaretaker();
         }
 
-        // Thay đổi trạng thái Order với khả năng undo
+        // 🎭 MEMENTO PATTERN: Lưu trạng thái hiện tại trước khi thay đổi
+        // STEP 1: Lấy Order từ database
+        // STEP 2: Tạo memento (snapshot) của state hiện tại
+        // STEP 3: Lưu memento vào caretaker stack (cho phép undo)
+        // STEP 4: Thay đổi state và save
         public async Task<bool> ChangeOrderStatus(int orderId, OrderStatus newStatus, string? notes = null)
         {
             try

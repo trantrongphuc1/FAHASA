@@ -82,11 +82,62 @@ namespace SportsStore.Controllers
                     m.Message,
                     m.IsFromAdmin,
                     m.SentAt,
-                    m.UserId
+                    m.UserId,
+                    m.IsRead
                 })
                 .ToListAsync();
 
             return Json(messages);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetUnreadCount()
+        {
+            var isAuth = User?.Identity?.IsAuthenticated == true;
+            if (!isAuth)
+            {
+                return Json(new { count = 0 });
+            }
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { count = 0 });
+            }
+
+            var count = await _context.ChatMessages
+                .Where(m => m.UserId == userId && m.IsFromAdmin && !m.IsRead)
+                .CountAsync();
+
+            return Json(new { count });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkMessagesAsRead()
+        {
+            var isAuth = User?.Identity?.IsAuthenticated == true;
+            if (!isAuth)
+            {
+                return BadRequest();
+            }
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest();
+            }
+
+            var unreadMessages = await _context.ChatMessages
+                .Where(m => m.UserId == userId && m.IsFromAdmin && !m.IsRead)
+                .ToListAsync();
+
+            foreach (var msg in unreadMessages)
+            {
+                msg.IsRead = true;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
         }
     }
 

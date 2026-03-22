@@ -5,9 +5,37 @@ using SportsStore.Models;
 
 namespace SportsStore.Services
 {
-    // 🎯 MẪU THIẾT KẾ STRATEGY - Implementation cụ thể của notification strategy
-    // Xử lý logic gửi thông báo qua database và SignalR
-    // 🔗 IMPLEMENT: NotificationService implement interface INotificationService
+    // =================================================================
+    // 🎯 MẦU THIẾT KẾ STRATEGY - Implementation cụ thể của notification strategy
+    // =================================================================
+    // Mục đích: Xử lý logic gửi thông báo qua:
+    //   1. DATABASE: Persistent storage (Notification table)
+    //   2. SIGNALR: Real-time WebSocket broadcast
+    //
+    // Cách hoạt động:
+    //   CreateOrderNotificationAsync():
+    //     → Tạo Notification record trong DB
+    //     → Gửi real-time event qua SignalR webhook
+    //     → User nhìn thấy notification tức thì (không cần reload)
+    //
+    // Kết nối Signal R:
+    //   - Inject IHubContext<NotificationHub>
+    //   - Gọi hubContext.Clients.User(userId).SendAsync(...)
+    //   - Broadcast đến user's channel (SignalR group)
+    //
+    // 📚 PATTERN:
+    //   • STRATEGY PATTERN: Có thể thay NotificationService bằng EmailNotificationService
+    //   • OBSERVER PATTERN: User clients đăng ký lắng nghe notification events
+    //   • HUB PATTERN: Dùng SignalR Hub cho real-time delivery
+    //   • ADAPTER PATTERN: Adapts DbContext + HubContext to INotificationService
+    //
+    // 📄 LIÊN KẾT VỚI FILE KHÁC:
+    //   • Services/INotificationService.cs: Interface definition
+    //   • Hubs/NotificationHub.cs: SignalR hub cho broadcast
+    //   • Models/Notification.cs: Entity model
+    //   • Program.cs: Đăng ký: `AddScoped<INotificationService, NotificationService>()`
+    //   • Controllers/OrderController.cs: Gọi CreateOrderNotificationAsync()
+    // ==================================================================
     public class NotificationService : INotificationService
     {
         private readonly StoreDbContext _context;
@@ -21,6 +49,8 @@ namespace SportsStore.Services
 
         public async Task CreateOrderNotificationAsync(string userId, int orderId, string status, string message)
         {
+            // 🎯 STRATEGY IMPLEMENTATION: Gửi thông báo qua 2 kênh
+            // CHANNEL 1: DATABASE - Persistent storage
             var notification = new Notification
             {
                 UserId = userId,
@@ -36,6 +66,9 @@ namespace SportsStore.Services
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
 
+            // CHANNEL 2: SIGNALR - Real-time WebSocket delivery
+            // 👁️ OBSERVER PATTERN: Push notification đến user đã subscribe
+            // User không cần reload page để thấy notification
             await _hubContext.Clients.User(userId).SendAsync("ReceiveNotification", new
             {
                 notificationId = notification.NotificationId,

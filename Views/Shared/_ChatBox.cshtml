@@ -161,6 +161,7 @@
 
 <button class="chat-toggle-btn" onclick="toggleChatBox()">
     <i class="fas fa-comments"></i>
+    <span id="chatBadge" class="badge" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; padding:2px 6px; font-size:12px; min-width:18px; text-align:center;">0</span>
 </button>
 
 <div class="chat-box-container" id="chatBoxContainer">
@@ -205,7 +206,13 @@
     const container = document.getElementById('chatBoxContainer');
     if(chatBoxOpen){
       container.classList.add('open');
-      if(window.App){ App.initChatHub({ userId: chatUserId, userName: chatUserName, isAdmin: chatIsAdmin }); }
+      if(window.App){ 
+        App.initChatHub({ userId: chatUserId, userName: chatUserName, isAdmin: chatIsAdmin });
+        // Mark messages as read when opening chat
+        fetch('/Chat/MarkMessagesAsRead', { method: 'POST' }).then(() => {
+          if(window.App) App.refreshChatBadge();
+        });
+      }
     } else {
       container.classList.remove('open');
     }

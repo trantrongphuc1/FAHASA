@@ -4,9 +4,26 @@ using System.Linq;
 
 namespace SportsStore.Models
 {
-    // 🛒 CLASS CƠ SỞ - Base cart functionality
-    // Chứa logic cơ bản của giỏ hàng (thêm/xóa sản phẩm)
-    // 🔗 ĐƯỢC KẾ THỪA: PersistentCart kế thừa từ Cart để thêm persistence
+    // =================================================================
+    // 📄 BASE CLASS VÀ COMPONENT PATTERN
+    // =================================================================
+    // Mục đích: Cung cấp chức năng cơ bản của giỏ hàng
+    // 
+    // Cách hoạt động:
+    //   1. Lines: List<CartLine> lưu các dòng sản phẩm
+    //   2. AddItem(): Thêm sản phẩm vào giỏ (hoặc cập nhật số lượng nếu đã có)
+    //   3. RemoveLine(): Xóa sản phẩm khỏi giỏ
+    //   4. ComputeTotalValue(): Tính tổng giá trị
+    //   5. Clear(): Xóa toàn bộ giỏ
+    //
+    // 🔄 DESIGN PATTERN:
+    //   • KẾ THỪA: PersistentCart kế thừa lừ Cart để mở rộng
+    //   • VIRTUAL METHOD: Mỗi method là virtual, cho phép override
+    //
+    // 📁 LIÊN KẾT VỚI FILE KHÁC:
+    //   • Models/PersistentCart.cs: Mở rộng Cart với tính năng persistence
+    //   • Program.cs: Đăng ký Cart qua Factory Method GetCart()
+    // ==================================================================
     public class Cart
     {
         // Danh sách các dòng sản phẩm trong giỏ hàng

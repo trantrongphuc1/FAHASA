@@ -8,16 +8,62 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SportsStore.Models
 {
-    // 🏗️ MẪU THIẾT KẾ DECORATOR - Mở rộng Cart với tính năng persistence
-    // Nâng cấp Cart với khả năng lưu trữ database/session
-    // 🎯 MẪU THIẾT KẾ FACADE - Cung cấp giao diện thống nhất cho các thao tác cart
-    // Ẩn độ phức tạp của logic lưu trữ session vs database
-    // 🔗 KẾ THỪA: PersistentCart kế thừa từ class Cart (base cart functionality)
+    // =================================================================
+    // 🎯 MẦU THIẾT KẾ: FACTORY METHOD + DECORATOR + FACADE
+    // =================================================================
+    //
+    // 1️⃣ FACTORY METHOD PATTERN (Phương thức Factory tĩnh)
+    // -----------------------------------------------
+    // Mục đích: GetCart() là factory method tạo Cart instance
+    // Context:
+    //   - User đăng nhập: Tạo PersistentCart, load từ DATABASE
+    //   - User ẩn dạnh: Tạo PersistentCart, load từ SESSION
+    // Lợi ích: Loại mũ xử lý cart creation complexity từ client
+    //
+    // 2️⃣ DECORATOR PATTERN
+    // -----------------------------------------------
+    // Mục đích: Mở rộng Cart với tính năng persistence
+    // PersistentCart WRAPS Cart base class
+    // Thêm chức năng: LoadFromDatabase(), SaveToDatabase(), LoadFromSession()
+    //
+    // 3️⃣ FACADE PATTERN
+    // -----------------------------------------------
+    // Mục đích: Cung cấp giao diện thống nhất cho cart operations
+    // Ẩn đi:
+    //   - PhUC tạp của session vs database logic
+    //   - Authentication checking
+    //   - Product loading từ repository
+    //
+    // Cách hoạt động:
+    //   GetCart(IServiceProvider) 
+    //     → Kiểm tra user ăng nhập hay không
+    //     → Load từ Database (nếu ăng nhập) hoặc Session (nếu ẩn dạnh)
+    //     → Trả về Cart instance đã populate
+    //
+    // 💂 DEPENDENCY INJECTION:
+    //   - IServiceProvider: Truy cập tất cả dịch vụ đăng ký (DI container)
+    //   - IHttpContextAccessor: Lấy HTTP context, session, user info
+    //   - StoreDbContext: Database context
+    //   - IStoreRepository: Repository pattern để lấy sản phẩm
+    //
+    // 📁 LIÊN KẾT VỚI FILE KHÁC:
+    //   • Program.cs: Đăng ký qua: `AddScoped<Cart>(sp => PersistentCart.GetCart(sp))`
+    //   • Models/Cart.cs: Base class của PersistentCart
+    //   • Models/IStoreRepository.cs: để lấy Product
+    //   • Models/StoreDbContext.cs: để access UserCartItems table
+    // ==================================================================
     public class PersistentCart : Cart
     {
-        // 🏭 MẪU THIẾT KẾ FACTORY METHOD - Phương thức factory tĩnh
-        // Tạo instance Cart phù hợp dựa trên context người dùng
-        // Trả về instance Cart được cấu hình cho user đăng nhập hoặc ẩn danh
+        // � FACTORY METHOD: Phương thức tĩnh
+        // Tạo instance Cart thích hợp dựa trên context
+        // 
+        // Logic:
+        //   1. Nếu user ăng nhập: LoadFromDatabase() → persistent cart
+        //   2. Nếu user ẩn dạnh: LoadFromSession() → temporary cart
+        //
+        // Trê lợi: 
+        //   - Người gọi không cần biết chi tiết
+        //   - Factory quản lý cart creation complexity
         public static Cart GetCart(IServiceProvider services)
         {
             var session = services.GetRequiredService<IHttpContextAccessor>()?.HttpContext?.Session;

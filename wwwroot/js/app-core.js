@@ -107,21 +107,39 @@
       if(chatConnection){ return; }
       chatConnection = new signalR.HubConnectionBuilder().withUrl('/chathub').withAutomaticReconnect().build();
       chatConnection.on('ReceiveMessage', function(fromUserId, user, message, isAdminMsg, time){
-        // For admins show all, for users only own messages
-        if(isAdmin || fromUserId === userId){
+        // For users, only show messages addressed to them
+        if(!isAdmin && fromUserId === userId){
           App.renderChatMessage({ userName: user, message, isFromAdmin: isAdminMsg, sentAt: time, currentUserId: userId });
+          // If message is from admin, refresh badge
+          if(isAdminMsg){
+            App.refreshChatBadge();
+          }
         }
       });
       chatConnection.start().catch(err => console.error('Chat start error', err));
       App.loadChatMessages(opts);
       App._chatConfig = opts;
+      // Initial badge refresh
+      App.refreshChatBadge();
     });
   };
 
   App.sendChatMessage = function(message){
     const cfg = App._chatConfig || {}; if(!cfg.userId){ return; }
     const userId = cfg.userId, userName = cfg.userName, isAdmin = !!cfg.isAdmin;
-    if(!message || !chatConnection || chatConnection.state !== signalR.HubConnectionState.Connected){
+    if(!message){ return; }
+    
+    // Render message immediately for better UX
+    const now = new Date();
+    App.renderChatMessage({
+      userName: userName,
+      message: message,
+      isFromAdmin: isAdmin,
+      sentAt: now.toISOString(),
+      currentUserId: userId
+    });
+    
+    if(!chatConnection || chatConnection.state !== signalR.HubConnectionState.Connected){
       // fallback
       fetch('/Chat/SendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId,userName,message,isAdmin})}).then(()=> App.loadChatMessages(cfg));
       return;
@@ -143,9 +161,23 @@
     const isAdminMsg = msg.isFromAdmin;
     const div = document.createElement('div');
     div.className = 'message ' + (isAdminMsg ? 'admin' : 'user');
-    const timeStr = msg.sentAt ? (new Date(msg.sentAt).toLocaleTimeString('vi-VN')) : '';
+    let timeStr = '';
+    if(msg.sentAt){
+      const date = new Date(msg.sentAt);
+      timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    }
     div.innerHTML = `<div class="message-bubble">${msg.message}</div><div class="message-time">${msg.userName} - ${timeStr}</div>`;
     container.appendChild(div); container.scrollTop = container.scrollHeight;
+  };
+
+  App.refreshChatBadge = async function(){
+    const badge = document.getElementById('chatBadge');
+    try{
+      const res = await fetch('/Chat/GetUnreadCount');
+      const json = await res.json();
+      const count = json && typeof json.count === 'number' ? json.count : 0;
+      if(badge){ if(count>0){ badge.style.display='flex'; badge.textContent=count; } else { badge.style.display='none'; } }
+    }catch(e){ }
   };
 
   // Countdown Manager

@@ -6,9 +6,16 @@ using SportsStore.Models;
 
 namespace SportsStore.Services
 {
-    // 🎯 MẪU THIẾT KẾ STRATEGY - Implementation cụ thể của voucher strategy
-    // Xử lý logic áp dụng voucher và tính toán giảm giá
-    // 🔗 IMPLEMENT: VoucherService implement interface IVoucherService
+    // =================================================================
+    // 🎯 MẦU THIẾT KẾ STRATEGY - Implementation cụ thể của voucher strategy
+    // =================================================================
+    // Mục đích: Xử lý logic áp dụng voucher và tính toán giảm giá
+    //
+    // Cách hoạt động:
+    //   ApplyVoucherAsync():\n    //     1. Validate code tồn tại + active\n    //     2. Kiểm tra: daily limit, min order total, user eligibility\n    //     3. Tính discount amount\n    //     4. Tru số usage từ voucher\n    //     5. Return ApplyVoucherResult (success/failure)\n    //
+    // Business Rules:\n    //   • Daily usage limit: Voucher có DailyLimit (e.g. 100 lần/ngày)\n    //   • Min order total: Phải đạt mức tối thiểu để dùng\n    //   • User usage limit: Mỗi user dùng được bao nhiêu lần\n    //   • Expiration: Voucher có ngày hết hạn\n    //
+    // 🔄 LIÊN QUAN:\n    //   • STRATEGY PATTERN: Có thể có PercentageVoucherStrategy, FixedAmountVoucherStrategy\n    //   • DISCOUNT PATTERN: Tính toán giajust giả để\n    //   • VALIDATION PATTERN: Validate voucher trước áp dụng\n    //
+    // 📄 LIÊN KẾT VỚI FILE KHÁC:\n    //   • Services/IVoucherService.cs: Interface definition\n    //   • Models/Voucher.cs: Entity model\n    //   • Models/VoucherUserUsage.cs: Track user usage\n    //   • Program.cs: Đăng ký: `AddScoped<IVoucherService, VoucherService>()`\n    //   • Controllers/OrderController.cs: Áp dụng voucher khi checkout\n    // ==================================================================
     public class VoucherService : IVoucherService
     {
         private readonly StoreDbContext _ctx;

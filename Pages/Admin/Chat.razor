@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.SignalR
 @using Microsoft.JSInterop
+@implements IAsyncDisposable
 @inject StoreDbContext Context
 @inject Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> UserManager
 @inject IHubContext<SportsStore.Hubs.ChatHub> HubContext
@@ -279,7 +280,11 @@
     void RefreshMessages()
     {
         LoadConversations();
-        if (!string.IsNullOrEmpty(selectedConversationId)) LoadMessagesForSelected();
+        if (!string.IsNullOrEmpty(selectedConversationId)) 
+        {
+            LoadMessagesForSelected();
+            StateHasChanged();
+        }
     }
 
     async Task SendReply()
@@ -320,6 +325,7 @@
         await HubContext.Clients.All.SendAsync("ReceiveMessage", message.UserId ?? string.Empty, message.UserName, message.Message, true, DateTime.Now.ToString("HH:mm"));
 
         replyMessage = string.Empty;
+        StateHasChanged();
     }
 
     private string? selectedConversationId;
@@ -391,13 +397,22 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!firstRender) return;
+        
+        objRef = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("initAdminSignalR", objRef);
+        await JS.InvokeVoidAsync("adminChat.setupAdminKeySend", objRef, "replyInput");
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        try
         {
-            objRef = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync("initAdminSignalR", objRef);
-            // Setup Enter-to-send for admin reply box
-            await JS.InvokeVoidAsync("adminChat.setupAdminKeySend", objRef, "replyInput");
+            await JS.InvokeVoidAsync("stopAdminSignalR");
+            await JS.InvokeVoidAsync("adminChat.stopAdminKeySend", "replyInput");
         }
+        catch { }
+        objRef?.Dispose();
     }
 
     [JSInvokable]
@@ -412,7 +427,8 @@
                 UserName = userName,
                 Message = message,
                 IsFromAdmin = isFromAdmin,
-                SentAt = DateTime.Now
+                SentAt = DateTime.Now,
+                IsRead = isFromAdmin // Mark as read if it's from admin
             };
 
             messages.Add(chatMsg);
@@ -424,19 +440,11 @@
             LoadConversations();
             InvokeAsync(StateHasChanged);
         }
+        
+        // Always refresh conversation list to update unread counts
+        LoadConversations();
 
         return Task.CompletedTask;
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        try
-        {
-            await JS.InvokeVoidAsync("stopAdminSignalR");
-            await JS.InvokeVoidAsync("adminChat.stopAdminKeySend", "replyInput");
-        }
-        catch { }
-        objRef?.Dispose();
     }
 
     [JSInvokable]
