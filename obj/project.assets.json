@@ -5441,23 +5441,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\trant\\.nuget\\packages\\": {},
+    "C:\\Users\\duyng\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\trant\\Downloads\\Website-master-ori\\SportsStore.csproj",
+      "projectUniqueName": "C:\\Users\\duyng\\Downloads\\FahasaWorkShop\\SportsStore.csproj",
       "projectName": "SportsStore",
-      "projectPath": "C:\\Users\\trant\\Downloads\\Website-master-ori\\SportsStore.csproj",
-      "packagesPath": "C:\\Users\\trant\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\trant\\Downloads\\Website-master-ori\\obj\\",
+      "projectPath": "C:\\Users\\duyng\\Downloads\\FahasaWorkShop\\SportsStore.csproj",
+      "packagesPath": "C:\\Users\\duyng\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\duyng\\Downloads\\FahasaWorkShop\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\trant\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\duyng\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -5466,7 +5466,6 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
