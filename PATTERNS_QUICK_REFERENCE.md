@@ -2,7 +2,108 @@
 
 ## 📍 Tất cả Design Patterns và Vị trí (Dễ tra cứu)
 
-### 🔴 PATTERN CÓ THỂ TÌM THẤY Ở ĐAU?
+## 🧭 BẢNG MAP CHÍNH: FILE CHÍNH - INTERFACE - IMPLEMENT - NƠI SỬ DỤNG
+
+### A. Nhóm có Interface (dễ test, dễ thay thế)
+
+| STT | Pattern | File interface (hợp đồng) | File triển khai chính | Đăng ký DI trong Program.cs | Nơi sử dụng thực tế |
+|---|---|---|---|---|---|
+| 1 | Adapter Email | Services/EmailSender.cs (IEmailSender) | Services/EmailSender.cs (EmailSender) | AddScoped<IEmailSender, EmailSender>() | Controllers/AccountController.cs, Controllers/EmailTestController.cs |
+| 2 | Strategy Notification | Services/INotificationService.cs | Services/NotificationService.cs | AddScoped<INotificationService, NotificationService>() | Controllers/NotificationController.cs |
+| 3 | Strategy Voucher | Services/IVoucherService.cs | Services/VoucherService.cs | AddScoped<IVoucherService, VoucherService>() | Controllers/OrderController.cs |
+| 4 | Repository Store | Models/IStoreRepository.cs | Models/EFStoreRepository.cs | AddScoped<IStoreRepository, EFStoreRepository>() | Controllers/RentalController.cs, Models/PersistentCart.cs |
+| 5 | Repository Order | Models/IOrderRepository.cs | Models/EFOrderRepository.cs | AddScoped<IOrderRepository, EFOrderRepository>() | Controllers/OrderController.cs |
+| 6 | Repository Rental | Models/IRentalRepository.cs | Models/EFRentalRepository.cs | AddScoped<IRentalRepository, EFRentalRepository>() | Controllers/OrderController.cs, Controllers/RentalController.cs |
+
+### B. Nhóm không tách Interface riêng (theo class trung tâm)
+
+| STT | Pattern | File trung tâm (chính) | Thành phần đi kèm | Cách nối trong Program.cs | Nơi dùng |
+|---|---|---|---|---|---|
+| 1 | Builder + DI | Program.cs | WebApplicationBuilder, IServiceCollection | WebApplication.CreateBuilder(args) + AddScoped/AddSingleton | Toàn bộ ứng dụng |
+| 2 | Factory Method + Facade + Decorator (Cart) | Models/PersistentCart.cs | Models/Cart.cs (base class) | AddScoped<Cart>(sp => PersistentCart.GetCart(sp)) | Controllers/OrderController.cs, Controllers/AccountController.cs |
+| 3 | Memento (trạng thái đơn hàng) | Models/OrderStateManager.cs | OrderOriginator.cs, OrderMemento.cs, OrderCaretaker.cs | AddScoped<OrderStateManager>() | Controllers/OrderController.cs |
+| 4 | Observer Notification realtime | Hubs/NotificationHub.cs + Services/NotificationService.cs | SignalR Hub + IHubContext | AddSignalR() | NotificationService push ra client |
+| 5 | Observer Chat realtime | Hubs/ChatHub.cs | Group/Client của SignalR | AddSignalR() | Client JS/Blazor chat |
+
+### Ghi chú nhanh (tiếng Việt, dễ nhớ)
+
+- Quy tắc đọc nhanh: ưu tiên tìm interface trước, sau đó xem file implement và cuối cùng xem chỗ inject ở controller.
+- File gốc để lần theo toàn bộ quan hệ pattern là Program.cs vì đây là nơi map interface -> implementation.
+- Với Cart, file chính là PersistentCart.cs vì nó gom 3 vai trò cùng lúc: tạo đối tượng, che giấu logic, mở rộng hành vi.
+- Với Memento, OrderStateManager.cs là bộ điều phối; 3 file còn lại là thành phần lưu snapshot và quản lý lịch sử.
+
+## ✅ DANH SÁCH CHÍNH THỨC (KHÔNG LẶP): 13 PATTERN
+
+### 1) 13 pattern chính thức
+
+| STT | Pattern chính thức | Ghi chú chuẩn hóa |
+|---|---|---|
+| 1 | Builder | Cấu hình app trong Program.cs |
+| 2 | Adapter | EmailSender adapter cho SMTP |
+| 3 | Strategy | Bao gồm 2 biến thể: Notification, Voucher |
+| 4 | Repository | Bao gồm 3 biến thể: Store, Order, Rental |
+| 5 | Memento | Quản lý lịch sử trạng thái đơn hàng |
+| 6 | Decorator | PersistentCart mở rộng Cart |
+| 7 | Facade | PersistentCart.GetCart che giấu logic tạo cart |
+| 8 | Factory Method | GetCart(IServiceProvider) tạo cart theo context |
+| 9 | Observer | Bao gồm Chat và Notification realtime |
+| 10 | Hub | SignalR Hub cho realtime |
+| 11 | MVC | Controller -> Model -> View |
+| 12 | Dependency Injection / IoC | Interface -> Implementation trong Program.cs |
+| 13 | Async/Await | Bất đồng bộ ở controller/service/hub |
+
+### 2) Các mục lặp và cách gộp về pattern chính thức
+
+| Mục đang tách nhỏ trong tài liệu | Gộp vào pattern chính thức |
+|---|---|
+| Strategy Notification + Strategy Voucher | Strategy |
+| Repository Store + Repository Order + Repository Rental | Repository |
+| Observer Chat + Observer Notification | Observer |
+| Factory + Factory Method (nếu ghi chung ngữ cảnh GetCart) | Factory Method |
+
+## 🧱 GIẢI THÍCH CẶN KẼ: FILE .CS, VIEW, PAGE CHỨA GÌ VÀ XÀI GÌ
+
+### A. Nhóm .cs ở Controllers (điểm nhận request)
+
+| Nhóm file | Chứa gì | Xài gì |
+|---|---|---|
+| Controllers/HomeController.cs | Action hiển thị trang chủ, lọc/sắp xếp sản phẩm | StoreDbContext, SaleService, trả View |
+| Controllers/OrderController.cs | Checkout, quản lý đơn mua/thuê, đổi trạng thái | IOrderRepository, IRentalRepository, Cart, OrderStateManager, IVoucherService |
+| Controllers/NotificationController.cs | API đọc/đánh dấu thông báo | INotificationService |
+| Controllers/AccountController.cs | Đăng nhập/đăng xuất/đăng ký | UserManager, SignInManager, IEmailSender, Cart |
+| Controllers/RentalController.cs | Luồng thuê và trả sách | IRentalRepository, IStoreRepository, UserManager |
+
+### B. Nhóm .cs ở Models và Services (nghiệp vụ + dữ liệu)
+
+| Nhóm file | Chứa gì | Xài gì |
+|---|---|---|
+| Models/I*Repository.cs | Hợp đồng truy cập dữ liệu | Được inject vào Controller/Service |
+| Models/EF*Repository.cs | Triển khai data access bằng EF Core | StoreDbContext |
+| Models/PersistentCart.cs | Cart persistent theo Session/Database | IHttpContextAccessor, StoreDbContext, IStoreRepository |
+| Models/OrderStateManager.cs | Điều phối Memento (undo/redo) | OrderOriginator, OrderMemento, OrderCaretaker |
+| Services/INotificationService.cs + NotificationService.cs | Hợp đồng + triển khai thông báo | StoreDbContext, IHubContext<NotificationHub> |
+| Services/IVoucherService.cs + VoucherService.cs | Hợp đồng + triển khai áp mã giảm giá | StoreDbContext |
+| Services/EmailSender.cs | Adapter gửi email | IConfiguration, SmtpClient |
+
+### C. Nhóm View/Page/JS (giao diện hiển thị + realtime)
+
+| Nhóm file | Chứa gì | Xài gì |
+|---|---|---|
+| Views/*.cshtml | Razor View cho MVC | Model/ViewModel từ Controller |
+| Views/Shared/*.cshtml | Layout, partial dùng lại | Render chung nhiều trang |
+| Pages/**/*.razor | Razor Component (Blazor) | C# component lifecycle + JS interop |
+| wwwroot/js/admin-chat.js | Client chat realtime | SignalR connection.on/Send |
+| wwwroot/js/app-core.js | Script nền dùng toàn site | Event UI, realtime hooks |
+
+### D. Luồng chạy tổng quát giữa Controller - Service - View
+
+1. Người dùng gửi HTTP request vào route.
+2. Controller nhận request và gọi Service/Repository qua DI.
+3. Service/Repository làm nghiệp vụ + truy vấn DbContext.
+4. Controller trả về View (.cshtml) hoặc JSON API.
+5. Với realtime, Hub phát sự kiện qua SignalR và JS/Blazor client nhận ngay.
+
+### 🔴 PATTERN CÓ THỂ TÌM THẤY Ở ĐÂU?
 
 ---
 
@@ -41,7 +142,7 @@ builder.Services.AddSignalR();
    - Broadcast qua Database + SignalR
    - Sử dụng `IHubContext<NotificationHub>`
 
-**Sử dụng tại:** `Controllers/OrderController.cs`
+**Sử dụng tại:** `Controllers/NotificationController.cs`
 
 ---
 
@@ -72,7 +173,7 @@ builder.Services.AddSignalR();
    - Eager loading: .Include() for Category, ProductImages
 
 **Sử dụng tại:** 
-- `Controllers/HomeController.cs`
+- `Controllers/RentalController.cs`
 - `Models/PersistentCart.cs`
 
 ---
@@ -364,23 +465,23 @@ public async Task<bool> ChangeOrderStatus(int orderId, OrderStatus newStatus)
 
 ---
 
-## 📋 PATTERN OCCURRENCE COUNT
+## 📋 PATTERN OCCURRENCE COUNT (BẢN CHUẨN HÓA)
 
-| Pattern | Count | Files |
-|---------|-------|-------|
-| BUILDER | 1 | Program.cs |
-| ADAPTER | 2 | EmailSender.cs, HttpContextAccessor |
-| STRATEGY | 2 | NotificationService, VoucherService |
-| REPOSITORY | 3 | StoreRepo, OrderRepo, RentalRepo |
-| MEMENTO | 4 | StateManager, Originator, Memento, Caretaker |
-| DECORATOR | 1 | PersistentCart |
-| FACADE | 1 | PersistentCart.GetCart() |
-| FACTORY | 1 | PersistentCart.GetCart() |
-| OBSERVER | 2 | ChatHub, NotificationHub |
-| HUB | 2 | ChatHub, NotificationHub |
-| MVC | All | Controllers, Views, Models |
-| DI/IoC | 1 | Program.cs |
-| ASYNC | All | Everywhere |
+| Pattern chính thức | Số biến thể/điểm xuất hiện |
+|---|---|
+| Builder | 1 |
+| Adapter | 1 |
+| Strategy | 2 (Notification, Voucher) |
+| Repository | 3 (Store, Order, Rental) |
+| Memento | 1 cụm (gồm 4 class thành phần) |
+| Decorator | 1 |
+| Facade | 1 |
+| Factory Method | 1 |
+| Observer | 2 (Chat, Notification) |
+| Hub | 2 (ChatHub, NotificationHub) |
+| MVC | Xuyên suốt ứng dụng |
+| Dependency Injection / IoC | 1 cấu hình trung tâm |
+| Async/Await | Xuyên suốt ứng dụng |
 
 ---
 

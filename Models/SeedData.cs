@@ -41,25 +41,29 @@ namespace SportsStore.Models
             context.SaveChanges();
             }
 
-            // Seed Categories - Xóa và seed lại nếu cần
-            var categoryCount = context.Categories.Count();
-            if (categoryCount < 6)
+            // Seed Categories - đảm bảo đủ category bắt buộc để tránh lỗi KeyNotFound khi seed Products
+            var requiredCategoryNames = new[]
             {
-                // Xóa categories cũ nếu có
-                if (context.Categories.Any())
-                {
-                    context.Categories.RemoveRange(context.Categories);
-                    context.SaveChanges();
-                }
-                
-                context.Categories.AddRange(
-                    new Category { Name = "Sách lớp 1", AllowRent = false },
-                    new Category { Name = "Sách lớp 2", AllowRent = false },
-                    new Category { Name = "Sách lớp 3", AllowRent = false },
-                    new Category { Name = "Sách Khoa học", AllowRent = false },
-                    new Category { Name = "Sách Văn học", AllowRent = false },
-                    new Category { Name = "Sách Ngoại ngữ", AllowRent = false }
-                );
+                "Sách lớp 1",
+                "Sách lớp 2",
+                "Sách lớp 3",
+                "Sách Khoa học",
+                "Sách Văn học",
+                "Sách Ngoại ngữ"
+            };
+
+            var existingCategoryNames = context.Categories
+                .Select(c => c.Name)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var missingCategories = requiredCategoryNames
+                .Where(name => !existingCategoryNames.Contains(name))
+                .Select(name => new Category { Name = name, AllowRent = false })
+                .ToList();
+
+            if (missingCategories.Any())
+            {
+                context.Categories.AddRange(missingCategories);
                 context.SaveChanges();
             }
 
