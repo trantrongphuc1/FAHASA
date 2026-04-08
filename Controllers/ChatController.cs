@@ -112,6 +112,17 @@ namespace SportsStore.Controllers
             return Json(new { count });
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> GetAdminUnreadCount()
+        {
+            var count = await _context.ChatMessages
+                .Where(m => !m.IsFromAdmin && !m.IsRead)
+                .CountAsync();
+
+            return Json(new { count });
+        }
+
         [HttpPost]
         public async Task<IActionResult> MarkMessagesAsRead()
         {

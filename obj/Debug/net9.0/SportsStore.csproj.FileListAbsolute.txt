@@ -366,9 +366,7 @@ C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\compressed\q71a8qrays-zyqspy
 C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\compressed\uxbqkokfu0-lzs9hmhw5n.gz
 C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\compressed\137ic4jcgc-ft71q750bt.gz
 C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\compressed\lrlmqv6ncz-ki2nzxj2yh.gz
-C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\compressed\hk95h6c9ub-mzkf1jjiwv.gz
 C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\compressed\mzuvu8mk68-n2dc7bb7l8.gz
-C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\compressed\6fhk4qllbv-nxu35m3a14.gz
 C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\compressed\wlc6u5beyp-adosvea30x.gz
 C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\staticwebassets.build.json
 C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\staticwebassets.build.json.cache
@@ -380,3 +378,5 @@ C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\refint\SportsStore.dll
 C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\SportsStore.pdb
 C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\SportsStore.genruntimeconfig.cache
 C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\ref\SportsStore.dll
+C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\compressed\6fhk4qllbv-glhe74bxb7.gz
+C:\Users\trant\source\repos\FAHASA\obj\Debug\net9.0\compressed\hk95h6c9ub-0xmm108qr4.gz

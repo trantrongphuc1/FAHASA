@@ -200,12 +200,30 @@
   const chatUserName = '@userName';
   const chatIsAdmin = @(isAdmin ? "true" : "false");
   let chatBoxOpen = false;
+    let chatBadgePoll = null;
+
+    function clearLocalChatBadge(){
+        const badge = document.getElementById('chatBadge');
+        if(!badge) return;
+        badge.style.display = 'none';
+        badge.textContent = '0';
+    }
+
+    function initChatBadgePolling(){
+        if(!window.App || !chatUserId || chatIsAdmin) return;
+        App.refreshChatBadge();
+        if(chatBadgePoll) clearInterval(chatBadgePoll);
+        chatBadgePoll = setInterval(function(){
+            if(window.App) App.refreshChatBadge();
+        }, 10000);
+    }
 
   function toggleChatBox(){
     chatBoxOpen = !chatBoxOpen;
     const container = document.getElementById('chatBoxContainer');
     if(chatBoxOpen){
       container.classList.add('open');
+            clearLocalChatBadge();
       if(window.App){ 
         App.initChatHub({ userId: chatUserId, userName: chatUserName, isAdmin: chatIsAdmin });
         // Mark messages as read when opening chat
@@ -228,5 +246,12 @@
   }
 
   function handleChatKeyPress(event){ if(event.key==='Enter'){ sendMessage(); } }
+
+    // Keep red badge up-to-date even when the chat box is closed.
+    if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', initChatBadgePolling);
+    } else {
+        initChatBadgePolling();
+    }
 </script>
 

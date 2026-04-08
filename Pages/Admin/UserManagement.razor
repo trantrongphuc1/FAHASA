@@ -1,8 +1,10 @@
 @page "/admin/users"
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using SportsStore.Models
 @inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 @inject ILogger<UserManagement> Logger
 @layout AdminLayout
@@ -144,6 +146,62 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         color: white;
+    }
+
+    .delete-btn {
+        background: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 8px;
+    }
+
+    .delete-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(207, 19, 34, 0.35);
+        color: white;
+    }
+
+    .danger-alert {
+        background: #fff1f0;
+        border: 1px solid #ffa39e;
+        color: #a8071a;
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 15px;
+    }
+
+    .confirm-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    }
+
+    .confirm-modal {
+        width: 100%;
+        max-width: 460px;
+        background: white;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .confirm-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 16px;
     }
 
     .pagination {
@@ -296,6 +354,13 @@ else
                                     <i class="fas fa-edit"></i>
                                     <span>Sửa</span>
                                 </button>
+                                @if (!user.IsAdmin)
+                                {
+                                    <button class="delete-btn" @onclick="@(() => AskDeleteUser(user))">
+                                        <i class="fas fa-trash"></i>
+                                        <span>Xóa</span>
+                                    </button>
+                                }
                 </td>
             </tr>
         }
@@ -316,6 +381,25 @@ else
     }
 </div>
 
+@if (showDeleteConfirm)
+{
+    <div class="confirm-overlay">
+        <div class="confirm-modal">
+            <h5 class="mb-2"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Xác nhận xóa tài khoản</h5>
+            <p class="mb-0">Bạn có chắc muốn xóa tài khoản <strong>@(deleteTarget?.Email)</strong> không?</p>
+            <p class="text-muted mt-2 mb-0"><small>Hành động này không thể hoàn tác.</small></p>
+
+            <div class="confirm-actions">
+                <button class="btn-cancel" @onclick="CancelDelete">Hủy</button>
+                <button class="delete-btn" @onclick="DeleteSelectedUserAsync">
+                    <i class="fas fa-trash"></i>
+                    <span>Xóa tài khoản</span>
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Form thêm/sửa -->
 @if (showForm)
 {
@@ -328,6 +412,11 @@ else
                 <i class="fas fa-@(isEditMode ? "edit" : "user-plus") me-2"></i>
                 @(isEditMode ? "Sửa người dùng" : "Thêm người dùng mới")
             </h4>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="danger-alert">@errorMessage</div>
+            }
 
             <div class="form-group">
                 <label>Họ tên:</label>
@@ -385,6 +474,9 @@ else
     private string newPassword = "";
     private bool showForm = false;
     private bool isEditMode = false;
+    private bool showDeleteConfirm = false;
+    private ApplicationUser? deleteTarget;
+    private string errorMessage = string.Empty;
     private string _searchTerm = "";
     private string searchTerm
     {
@@ -435,6 +527,7 @@ else
         formUser = new ApplicationUser();
         newPassword = "";
         isEditMode = false;
+        errorMessage = string.Empty;
         showForm = true;
     }
 
@@ -451,11 +544,81 @@ else
             IsAdmin = user.IsAdmin
         };
         isEditMode = true;
+        errorMessage = string.Empty;
         showForm = true;
+    }
+
+    private void AskDeleteUser(ApplicationUser user)
+    {
+        errorMessage = string.Empty;
+        deleteTarget = user;
+        showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        deleteTarget = null;
+    }
+
+    private async Task DeleteSelectedUserAsync()
+    {
+        if (deleteTarget == null)
+        {
+            showDeleteConfirm = false;
+            return;
+        }
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var currentAdminId = authState?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (deleteTarget.IsAdmin)
+            {
+                errorMessage = "Không thể xóa tài khoản Admin.";
+                showDeleteConfirm = false;
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(currentAdminId) && deleteTarget.Id == currentAdminId)
+            {
+                errorMessage = "Không thể tự xóa chính tài khoản đang đăng nhập.";
+                showDeleteConfirm = false;
+                return;
+            }
+
+            var user = await UserManager.FindByIdAsync(deleteTarget.Id);
+            if (user == null)
+            {
+                errorMessage = "Tài khoản không tồn tại hoặc đã bị xóa.";
+                showDeleteConfirm = false;
+                return;
+            }
+
+            var result = await UserManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                errorMessage = string.Join("; ", result.Errors.Select(e => e.Description));
+                showDeleteConfirm = false;
+                return;
+            }
+
+            showDeleteConfirm = false;
+            deleteTarget = null;
+            await LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Không thể xóa tài khoản này vì đang có dữ liệu liên quan (đơn hàng/thuê/chat...).";
+            Logger.LogError(ex, "Delete user failed");
+            showDeleteConfirm = false;
+        }
     }
 
     private async Task HandleSubmit()
     {
+        errorMessage = string.Empty;
         IdentityResult result;
 
         if (isEditMode)
@@ -488,7 +651,8 @@ else
         }
         else
         {
-            Logger.LogError("Lỗi: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+            errorMessage = string.Join("; ", result.Errors.Select(e => e.Description));
+            Logger.LogError("Lỗi: " + errorMessage);
         }
     }
 

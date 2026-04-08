@@ -2,6 +2,7 @@
 @layout AdminLayout
 @using SportsStore.Models
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.SignalR
 @using Microsoft.JSInterop
 @implements IAsyncDisposable
@@ -225,7 +226,7 @@
             }
             else
             {
-                <div class="chat-messages-list">
+                <div class="chat-messages-list" id="admin-messages-list">
                     @foreach (var msg in messages.OrderBy(m => m.SentAt))
                     {
                         var css = msg.IsFromAdmin ? "message admin" : "message user";
@@ -248,7 +249,7 @@
 
                 <div class="reply-section mt-3">
                     <h5 class="mb-3"><i class="fas fa-reply me-2"></i>Trả lời khách hàng</h5>
-                    <textarea id="replyInput" class="reply-input" @bind="replyMessage" placeholder="Nhập tin nhắn trả lời..."></textarea>
+                    <textarea id="replyInput" class="reply-input" @bind="replyMessage" @onkeydown="HandleReplyKeyDown" placeholder="Nhập tin nhắn trả lời..."></textarea>
                     <button class="btn-send-reply" @onclick="SendReply">
                         <i class="fas fa-paper-plane me-2"></i>Gửi tin nhắn
                     </button>
@@ -261,15 +262,14 @@
 @code {
     private List<ChatMessage> messages = new();
     private string replyMessage = string.Empty;
+    private bool shouldScrollToBottom;
 
     protected override void OnInitialized()
     {
         LoadConversations();
-        if (conversations.Any())
-        {
-            selectedConversationId = conversations.First().UserId;
-            LoadMessagesForSelected();
-        }
+        // Do not auto-open any conversation; admin must click one explicitly.
+        selectedConversationId = null;
+        messages = new List<ChatMessage>();
     }
 
     void LoadMessages()
@@ -318,13 +318,30 @@
             SentAt = DateTime.Now
         };
 
+        if (!string.IsNullOrEmpty(recipientId))
+        {
+            MarkConversationAsRead(recipientId);
+        }
+
         Context.ChatMessages.Add(message);
         Context.SaveChanges();
 
         // Gửi qua SignalR - include recipient id so clients can route the message to the right conversation
         await HubContext.Clients.All.SendAsync("ReceiveMessage", message.UserId ?? string.Empty, message.UserName, message.Message, true, DateTime.Now.ToString("HH:mm"));
 
+        // Show admin message immediately in current panel even if SignalR echo is delayed.
+        if (!string.IsNullOrEmpty(selectedConversationId) && selectedConversationId == message.UserId)
+        {
+            messages.Add(message);
+        }
         replyMessage = string.Empty;
+        LoadConversations();
+        try
+        {
+            await JS.InvokeVoidAsync("removeChatMenuHighlight");
+        }
+        catch { }
+        shouldScrollToBottom = true;
         StateHasChanged();
     }
 
@@ -335,10 +352,25 @@
         selectedConversationId = string.IsNullOrWhiteSpace(id) ? null : id;
     }
 
-    void SelectConversationAndLoad(string id)
+    async Task SelectConversationAndLoad(string id)
     {
         selectedConversationId = string.IsNullOrWhiteSpace(id) ? null : id;
         LoadMessagesForSelected();
+        try
+        {
+            await JS.InvokeVoidAsync("removeChatMenuHighlight");
+        }
+        catch { }
+        shouldScrollToBottom = true;
+        StateHasChanged();
+    }
+
+    async Task HandleReplyKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await SendReply();
+        }
     }
 
     private List<ConversationVm> conversations = new();
@@ -382,26 +414,59 @@
             .OrderBy(m => m.SentAt)
             .ToList();
 
-        // Mark customer messages as read when admin opens the conversation
-        var unread = messages.Where(m => !m.IsFromAdmin && !m.IsRead).ToList();
-        if (unread.Any())
+        MarkConversationAsRead(selectedConversationId);
+        LoadConversations();
+    }
+
+    void MarkConversationAsRead(string? conversationId)
+    {
+        if (string.IsNullOrWhiteSpace(conversationId))
         {
-            foreach (var u in unread) u.IsRead = true;
-            Context.SaveChanges();
-            // refresh conversation list counts
-            LoadConversations();
+            return;
         }
+
+        var unread = Context.ChatMessages
+            .Where(m => m.UserId == conversationId && !m.IsFromAdmin && !m.IsRead)
+            .ToList();
+
+        if (!unread.Any())
+        {
+            return;
+        }
+
+        foreach (var u in unread)
+        {
+            u.IsRead = true;
+        }
+
+        Context.SaveChanges();
     }
 
     private DotNetObjectReference<Chat>? objRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender) return;
-        
-        objRef = DotNetObjectReference.Create(this);
-        await JS.InvokeVoidAsync("initAdminSignalR", objRef);
-        await JS.InvokeVoidAsync("adminChat.setupAdminKeySend", objRef, "replyInput");
+        if (firstRender)
+        {
+            try
+            {
+                objRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("initAdminSignalR", objRef);
+                await JS.InvokeVoidAsync("removeChatMenuHighlight");
+            }
+            catch { }
+            shouldScrollToBottom = true;
+        }
+
+        if (shouldScrollToBottom)
+        {
+            shouldScrollToBottom = false;
+            try
+            {
+                await JS.InvokeVoidAsync("adminChat.scrollMessagesToBottom", "admin-messages-list");
+            }
+            catch { }
+        }
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()
@@ -409,7 +474,6 @@
         try
         {
             await JS.InvokeVoidAsync("stopAdminSignalR");
-            await JS.InvokeVoidAsync("adminChat.stopAdminKeySend", "replyInput");
         }
         catch { }
         objRef?.Dispose();
@@ -432,6 +496,12 @@
             };
 
             messages.Add(chatMsg);
+
+            if (!isFromAdmin)
+            {
+                MarkConversationAsRead(fromUserId);
+            }
+
             InvokeAsync(StateHasChanged);
         }
         else
@@ -443,14 +513,9 @@
         
         // Always refresh conversation list to update unread counts
         LoadConversations();
+        shouldScrollToBottom = true;
 
         return Task.CompletedTask;
     }
 
-    [JSInvokable]
-    public Task OnAdminEnterPressed()
-    {
-        _ = InvokeAsync(async () => await SendReply());
-        return Task.CompletedTask;
-    }
 }

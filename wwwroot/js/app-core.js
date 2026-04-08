@@ -128,16 +128,18 @@
     const cfg = App._chatConfig || {}; if(!cfg.userId){ return; }
     const userId = cfg.userId, userName = cfg.userName, isAdmin = !!cfg.isAdmin;
     if(!message){ return; }
-    
-    // Render message immediately for better UX
-    const now = new Date();
-    App.renderChatMessage({
-      userName: userName,
-      message: message,
-      isFromAdmin: isAdmin,
-      sentAt: now.toISOString(),
-      currentUserId: userId
-    });
+
+    // User side receives an echo from SignalR, so avoid optimistic render to prevent duplicate lines.
+    if(isAdmin){
+      const now = new Date();
+      App.renderChatMessage({
+        userName: userName,
+        message: message,
+        isFromAdmin: isAdmin,
+        sentAt: now.toISOString(),
+        currentUserId: userId
+      });
+    }
     
     if(!chatConnection || chatConnection.state !== signalR.HubConnectionState.Connected){
       // fallback
@@ -163,8 +165,14 @@
     div.className = 'message ' + (isAdminMsg ? 'admin' : 'user');
     let timeStr = '';
     if(msg.sentAt){
-      const date = new Date(msg.sentAt);
-      timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      if(typeof msg.sentAt === 'string' && /^\d{2}:\d{2}$/.test(msg.sentAt)){
+        timeStr = msg.sentAt;
+      } else {
+        const date = new Date(msg.sentAt);
+        timeStr = isNaN(date.getTime())
+          ? String(msg.sentAt)
+          : date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      }
     }
     div.innerHTML = `<div class="message-bubble">${msg.message}</div><div class="message-time">${msg.userName} - ${timeStr}</div>`;
     container.appendChild(div); container.scrollTop = container.scrollHeight;
