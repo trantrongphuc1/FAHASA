@@ -392,7 +392,12 @@
             .Select(g => new ConversationVm
             {
                 UserId = g.Key,
-                UserName = g.OrderByDescending(x => x.SentAt).Select(x => x.UserName).FirstOrDefault() ?? "Khách",
+                UserName = g.Where(x => !x.IsFromAdmin && !string.IsNullOrEmpty(x.UserName))
+                            .OrderByDescending(x => x.SentAt)
+                            .Select(x => x.UserName)
+                            .FirstOrDefault()
+                            ?? g.OrderByDescending(x => x.SentAt).Select(x => x.UserName).FirstOrDefault()
+                            ?? "Khách",
                 LastMessage = g.OrderByDescending(x => x.SentAt).Select(x => x.Message).FirstOrDefault() ?? string.Empty,
                 LastAt = g.Max(x => x.SentAt),
                 UnreadCount = g.Count(x => !x.IsFromAdmin && !x.IsRead)

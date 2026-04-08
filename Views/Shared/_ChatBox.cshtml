@@ -209,13 +209,30 @@
         badge.textContent = '0';
     }
 
+    async function refreshUserChatBadge(){
+        if(!chatUserId || chatIsAdmin) return;
+        try{
+            const res = await fetch('/Chat/GetUnreadCount');
+            if(!res.ok) return;
+            const json = await res.json();
+            const count = json && typeof json.count === 'number' ? json.count : 0;
+            const badge = document.getElementById('chatBadge');
+            if(!badge) return;
+            if(count > 0){
+                badge.style.display = 'flex';
+                badge.textContent = String(count);
+            } else {
+                badge.style.display = 'none';
+                badge.textContent = '0';
+            }
+        } catch(_) { }
+    }
+
     function initChatBadgePolling(){
-        if(!window.App || !chatUserId || chatIsAdmin) return;
-        App.refreshChatBadge();
+        if(!chatUserId || chatIsAdmin) return;
+        refreshUserChatBadge();
         if(chatBadgePoll) clearInterval(chatBadgePoll);
-        chatBadgePoll = setInterval(function(){
-            if(window.App) App.refreshChatBadge();
-        }, 10000);
+        chatBadgePoll = setInterval(refreshUserChatBadge, 5000);
     }
 
   function toggleChatBox(){
@@ -224,13 +241,11 @@
     if(chatBoxOpen){
       container.classList.add('open');
             clearLocalChatBadge();
-      if(window.App){ 
+            if(window.App){ 
         App.initChatHub({ userId: chatUserId, userName: chatUserName, isAdmin: chatIsAdmin });
-        // Mark messages as read when opening chat
-        fetch('/Chat/MarkMessagesAsRead', { method: 'POST' }).then(() => {
-          if(window.App) App.refreshChatBadge();
-        });
       }
+            // Mark messages as read when opening chat, then refresh red badge immediately.
+            fetch('/Chat/MarkMessagesAsRead', { method: 'POST' }).finally(refreshUserChatBadge);
     } else {
       container.classList.remove('open');
     }

@@ -123,6 +123,28 @@ namespace SportsStore.Controllers
             return Json(new { count });
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> MarkAdminMessagesAsRead()
+        {
+            var unreadMessages = await _context.ChatMessages
+                .Where(m => !m.IsFromAdmin && !m.IsRead)
+                .ToListAsync();
+
+            if (!unreadMessages.Any())
+            {
+                return Ok();
+            }
+
+            foreach (var msg in unreadMessages)
+            {
+                msg.IsRead = true;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         [HttpPost]
         public async Task<IActionResult> MarkMessagesAsRead()
         {

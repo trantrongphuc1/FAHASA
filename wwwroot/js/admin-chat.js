@@ -29,6 +29,15 @@ window.adminChat = {
     init: function (dotNetRef) {
         this.dotNetRef = dotNetRef;
 
+        // Keep unread badge functional even if SignalR fails.
+        this.refreshUnreadBadge();
+        if (this.badgePollId) {
+            clearInterval(this.badgePollId);
+        }
+        this.badgePollId = setInterval(() => {
+            this.refreshUnreadBadge();
+        }, 5000);
+
         this.ensureSignalR().then(() => {
         // Always reset old connection when entering chat page to avoid stale callbacks after navigation.
         if (this.connection) {
@@ -129,6 +138,12 @@ window.adminChat = {
             }
         } catch (_) { }
     },
+    markAllAsRead: async function () {
+        try {
+            await fetch('/Chat/MarkAdminMessagesAsRead', { method: 'POST' });
+        } catch (_) { }
+        window.removeChatMenuHighlight();
+    },
     setupAdminKeySend: function (dotNetRef, textareaId) {
         var el = document.getElementById(textareaId);
         if (!el) {
@@ -221,12 +236,12 @@ if (document.readyState === 'loading') {
             const chatMenuItem = document.querySelector('a[href="/admin/chat"]');
             if (chatMenuItem) {
                 chatMenuItem.addEventListener('click', function(){
-                    window.removeChatMenuHighlight();
+                    window.adminChat.markAllAsRead();
                 });
             }
         }
         if (window.location.pathname === '/admin/chat') {
-            setTimeout(window.removeChatMenuHighlight, 100);
+            setTimeout(function(){ window.adminChat.markAllAsRead(); }, 100);
         }
     });
 } else {
@@ -236,11 +251,11 @@ if (document.readyState === 'loading') {
         const chatMenuItem = document.querySelector('a[href="/admin/chat"]');
         if (chatMenuItem) {
             chatMenuItem.addEventListener('click', function(){
-                window.removeChatMenuHighlight();
+                window.adminChat.markAllAsRead();
             });
         }
     }
     if (window.location.pathname === '/admin/chat') {
-        setTimeout(window.removeChatMenuHighlight, 100);
+        setTimeout(function(){ window.adminChat.markAllAsRead(); }, 100);
     }
 }
